@@ -1,0 +1,71 @@
+class account:
+    def __init__(self,accN,pin):
+        self.accN = accN 
+        self.pin = pin 
+
+class mainSystem():
+    def __init__(self):
+        self.accounts_registered = {}
+
+    def runSystem(self):
+        while True:
+            ans = input("Welcome to JRE2 Banking System!\nPlease select a function: \n0. Create Account \n1. Login \n2. Exit \nResponse: ")
+            if ans =="0":
+                while True:
+                    try:
+                        accN = str(input("Enter an 8-digit Account Number: "))
+                        if accN.isalpha():
+                            print("Invalid Account Number.")
+                            continue  
+                        elif len(accN) != 8:
+                            print("Account Number should be 8 digits!")
+                            continue 
+                        elif int(accN)<0:
+                            print("Invalid Account Number!")
+                            continue
+                        elif accN in self.accounts_registered:
+                            print("Account Already exists.")
+                            continue
+                        break 
+                    except ValueError:
+                        print("Invalid Response!")
+                        continue
+                while True:
+                    try:
+                        pin = str(input("Enter a 6 digit pin: "))
+                        if pin.isalpha():
+                            print("Invalid pin.")
+                            continue 
+
+                        elif len(pin) != 6:
+                            print("Invalid pin!")
+                            continue
+                        elif int(pin)<0:
+                            print("Invalid pin!")
+                            continue
+                        break 
+                    except ValueError:
+                        print("Invalid Response!")
+                        continue
+                    
+                acc = account(accN,pin)
+                self.accounts_registered[accN] = acc
+                print("Account Successfully Created!")
+
+            if ans =="1":
+                while True:
+                    accN = str(input("Enter Account Number: "))
+                    if not accN in self.accounts_registered:
+                        print(f"No {accN} found.")
+                        continue
+                    break 
+                while True:
+                    pin = str(input("Enter pin: "))
+                    if pin != self.accounts_registered[accN].pin:
+                        print("Incorrect pin.")
+                        continue
+                    print("Successfully Logged in!")
+                    break       
+                break
+mainSystem = mainSystem()
+mainSystem.runSystem()
