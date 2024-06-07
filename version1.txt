@@ -52,7 +52,7 @@ class mainSystem():
                 self.accounts_registered[accN] = acc
                 print("Account Successfully Created!")
 
-            if ans =="1":
+            elif ans =="1":
                 while True:
                     accN = str(input("Enter Account Number: "))
                     if not accN in self.accounts_registered:
@@ -67,5 +67,10 @@ class mainSystem():
                     print("Successfully Logged in!")
                     break       
                 break
+            elif ans == "2":
+                print("Exiting.")
+                break
+            else:
+                print("Invalid Response.")
 mainSystem = mainSystem()
 mainSystem.runSystem()
