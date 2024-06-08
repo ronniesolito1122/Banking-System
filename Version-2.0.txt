@@ -1,0 +1,27 @@
+class bank_system:
+    def __init__(self):
+        self.accounts = {}
+        
+    def add_account(self,acc,pin,balance):
+        self.accounts[acc] = account(pin,balance)
+        
+    def deposit_money(self,acc,dep):
+        self.accounts[acc].balance +=dep
+        self.accounts[acc].history.append(f"Transaction {int(self.accounts[acc].index)+1}: Deposited {dep}")
+        self.accounts[acc].index +=1
+    
+    def withdraw_money(self,acc,wit):
+        self.accounts[acc].balance -= wit 
+        self.accounts[acc].history.append(f"Transaction {int(self.accounts[acc].index)+1}: Withdraw {wit}")
+        self.accounts[acc].index +=1
+        
+    def check_balance(self,acc):
+        return self.accounts[acc].balance 
+    
+    def transfer_money(self,acc1,acc2,amount):
+        self.accounts[acc1].balance -= amount 
+        self.accounts[acc2].balance += amount 
+        self.accounts[acc1].history.append(f"Transaction {int(self.accounts[acc1].index)+1}: Transferred {amount} to {acc2}.") 
+        self.accounts[acc2].history.append(f"Transaction {int(self.accounts[acc2].index)+1}: Received {amount} from {acc1}.")
+        self.accounts[acc1].index +=1
+        self.accounts[acc2].index +=1
