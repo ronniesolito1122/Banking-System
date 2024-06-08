@@ -1,3 +1,9 @@
 Version 1 - Basic Creation and Log-in of Account
 
-In this version, we implemented the basic creation of an account. The user is prompted to enter an 8-digit account number and a 6-digit PIN. For now, this is the only functionality of version 1. Note that: functionalities like depositing, withdrawing, checking balances, and transferring money are still under development. This initial version paves the way for a more comprehensive banking experience in upcoming updates.
+In this version, we implemented the basic creation of an account. The user is prompted to enter an 8-digit account number and a 6-digit PIN. 
+
+
+For now, this is the only functionality of version 1. 
+
+
+Note that: functionalities like depositing, withdrawing, checking balances, and transferring money are still under development. This initial version paves the way for a more comprehensive banking experience in upcoming updates.
