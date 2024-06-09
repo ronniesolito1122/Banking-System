@@ -1,3 +1,6 @@
+import time 
+import sys
+
 class account:
     def __init__(self,pin,balance):
         self.index = 0
@@ -21,9 +24,15 @@ class bank_system:
         self.accounts[acc].balance -= wit 
         self.accounts[acc].history.append(f"Transaction {int(self.accounts[acc].index)+1}: Withdraw {wit}")
         self.accounts[acc].index +=1
-        
-    def check_balance(self,acc):
-        return self.accounts[acc].balance 
+    
+    def check_balance(self,log_acc):
+        print(f"Checking balance", end="")
+        for i in range(10):
+            sys.stdout.write(".")
+            sys.stdout.flush()
+            time.sleep(0.2)
+        print()
+        return f"Account {log_acc}'s Balance: ₱{round(self.accounts[log_acc].balance,6)} "
     
     def transfer_money(self,acc1,acc2,amount):
         self.accounts[acc1].balance -= amount 
@@ -80,7 +89,7 @@ while True:
                     continue
                 while True:
                     balance = float(input("Enter the initial balance: "))
-                    if balance <0:
+                    if balance <=0:
                         print("Invalid Amount. Try again.")
                         continue
                     break
@@ -120,7 +129,7 @@ while True:
                     time.sleep(0.2)
                 print()
                 if log_pin.isalpha():
-                            	raise ValueError
+                    raise ValueError
                 if (bank_system.accounts[log_acc].pin == log_pin):
                     print("SUCCESSFULLY LOGGED IN!")
                     
@@ -129,13 +138,42 @@ while True:
                         log_ans = int(input(f"0.Deposit \n1.Withdraw \n2.Check Balance \n3.Transfer Money \n4.View Transaction History \n5.Log Out \nResponse: "))
 
                         if log_ans == 0:
-                            print()
+                            while True:
+                                deposit = float(input("Enter amount: "))
+                                print(f"Transaction in progress", end ="")
+                                for i in range(10):
+                                    sys.stdout.write(".")
+                                    sys.stdout.flush()
+                                    time.sleep(0.2)
+                                print()
+                                if deposit <=0:
+                                    print("Invalid amount. Enter again.")
+                                    continue
+                                break
+                            bank_system.deposit_money(log_acc,deposit)
+                            print("Transaction Complete.")
 
                         elif log_ans == 1: 
-                            print()
+                            while True:
+                                withdraw = float(input("Enter amount: "))
+                                print(f"Checking balance",end="")
+                                for i in range(10):
+                                    sys.stdout.write(".")
+                                    sys.stdout.flush()
+                                    time.sleep(0.2)
+                                print()
+                                if withdraw<=0:
+                                    print("Invalid amount. Enter again.")
+                                    continue
+                                elif withdraw > bank_system.accounts[log_acc].balance:
+                                    print(f"Insufficient balance for withdrawal. You only have ₱{bank_system.accounts[log_acc].balance}.")
+                                    continue
+                                break
+                            bank_system.withdraw_money(log_acc,withdraw)
+                            print("Transaction Complete.")
 
                         elif log_ans == 2: 
-                            print()
+                            print(bank_system.check_balance(log_acc))
 
                         elif log_ans ==3:
                             log_acc2 = str(input("Enter the recipient's account: "))
@@ -163,7 +201,7 @@ while True:
                                     print(f"Insufficient balance for transfer. You only have ₱{bank_system.accounts[log_acc].balance}.")
                                     continue 
                                 
-                                elif transfer <0:
+                                elif transfer <=0:
                                     print("Invalid Amount.")
                                     continue
                                 bank_system.transfer_money(log_acc,log_acc2,transfer)
