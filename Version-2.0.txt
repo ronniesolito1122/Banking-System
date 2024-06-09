@@ -1,3 +1,10 @@
+class account:
+    def __init__(self,pin,balance):
+        self.index = 0
+        self.pin = pin 
+        self.balance = balance
+        self.history = [] 
+
 class bank_system:
     def __init__(self):
         self.accounts = {}
