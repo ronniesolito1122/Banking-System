@@ -1,0 +1,849 @@
+import time 
+import random
+import sys
+import pickle
+
+class OTPGenerator():
+    def __init__(self):
+        self.OTPTaken = []
+    def generate_OTP(self):
+        otp = ''.join([str(random.randint(0, 9)) for _ in range(8)])
+        while otp in self.OTPTaken:
+            otp = ''.join([str(random.randint(0, 9)) for _ in range(8)])
+        self.OTPTaken.append(otp)
+        return otp
+
+class Data:
+    def __init__(self, bank_system):
+        self.data = bank_system.accounts
+        self.OTPTaken = bank_system.OTPTaken
+        
+    def save(self, directory):
+        with open(directory, 'wb') as f:
+            pickle.dump(self.data, f)
+
+    def load(self, directory):
+        try:
+            with open(directory, 'rb') as f:
+                loaded_dict = pickle.load(f)
+            return loaded_dict
+        except FileNotFoundError:
+            return "none"
+        except pickle.UnpicklingError:
+            return "none"
+        
+    def saveOTPS(self,directory):
+        with open(directory,'wb') as f:
+            pickle.dump(self.OTPTaken,f) 
+    
+    def loadOTPS(self,directory):
+        try:
+            with open(directory,'rb') as f :
+                loaded_otp = pickle.load(f)
+            return loaded_otp
+        
+        except FileNotFoundError:
+            return "none"
+        
+class createVisa:
+    def __init__(self,username,address):
+        self.username = username
+        self.address = address
+        
+    def setUsername(self,account):
+        account.visa["username"] = self.username
+        
+    def setAddress(self,account):
+        account.visa["address"] = self.address 
+        
+    def setCCV(self,account):
+        account.visa["ccv"]=''.join([str(random.randint(0, 9)) for _ in range(3)])
+    
+class account:
+    def __init__(self, pin, balance):
+        self.index = 0
+        self.pin = pin
+        self.balance = balance
+        self.history = []
+        self.visa = {}
+        self.otp = None
+        
+    def validateVisa(self,username,address):
+        visa = createVisa(username,address)
+        visa.setAddress(self) 
+        visa.setUsername(self)
+        visa.setCCV(self)
+    
+class bank_system(OTPGenerator):
+    def __init__(self):
+        super().__init__()
+        self.accounts = {}
+
+    def add_account(self, acc, pin, balance):
+        self.accounts[acc] = account(pin, balance)
+        self.accounts[acc].otp = self.generate_OTP()
+        
+    def deposit_money(self,acc,dep):
+        self.accounts[acc].balance +=dep
+        self.accounts[acc].history.append(f"Transaction {int(self.accounts[acc].index)+1}: Deposited {dep}")
+        self.accounts[acc].index +=1
+    
+    def withdraw_money(self,acc,wit):
+        self.accounts[acc].balance -= wit 
+        self.accounts[acc].history.append(f"Transaction {int(self.accounts[acc].index)+1}: Withdrew {wit}")
+        self.accounts[acc].index +=1
+        
+    def check_balance(self,acc):
+        return self.accounts[acc].balance 
+    
+    def transfer_money(self,acc1,acc2,amount):
+        self.accounts[acc1].balance -= amount 
+        self.accounts[acc2].balance += amount 
+        self.accounts[acc1].history.append(f"Transaction {int(self.accounts[acc1].index)+1}: Transferred {amount} to {acc2}.") 
+        self.accounts[acc2].history.append(f"Transaction {int(self.accounts[acc2].index)+1}: Received {amount} from {acc1}.")
+        self.accounts[acc1].index +=1
+        self.accounts[acc2].index +=1
+        
+    def payBills(self,acc,b_account,amount):
+        self.accounts[acc].balance -= amount 
+        self.accounts[acc].history.append(f"Transaction {int(self.accounts[acc].index)+1}: Transferred {amount} to account number: {b_account}'s.")
+        self.accounts[acc].index +=1
+    def transfer_visa(self,acc,visa,amount):
+        
+        self.accounts[acc].balance -= amount 
+        self.accounts[acc].history.append(f"Transaction {int(self.accounts[acc].index)+1}: Transferred {amount} to VISA account: {visa}.") 
+        self.accounts[acc].index +=1
+        
+class mainSystem():
+    def deposit(self,bank_system,log_acc):
+        while True:
+            try:
+                deposit = float(input("Enter amount: "))
+                print(f"Transaction in progress", end="")
+                for i in range(10):
+                    sys.stdout.write(".")
+                    sys.stdout.flush()
+                    time.sleep(0.2)
+                print()
+                if deposit <= 0:
+                    print("Invalid amount. Enter again.")
+                    continue
+                break
+            except ValueError:
+                print(f"Exiting",end="")
+                for i in range(10):
+                    sys.stdout.write(".")
+                    sys.stdout.flush()
+                    time.sleep(0.2)
+                print()
+                return
+        bank_system.deposit_money(log_acc, deposit)
+        print("Transaction Complete.")   
+        
+    def withdraw(self,bank_system,log_acc):
+        while True:
+            try:
+                if bank_system.accounts[log_acc].balance <= 0:
+                    print("Insufficient balance for withdrawal.")
+                    break
+                withdraw = input("Enter amount (Max. withdrawal: 500000): ")
+                if withdraw.isalpha() or not withdraw:
+                    raise ValueError
+                withdraw = float(withdraw)
+                print(f"Checking balance", end="")
+                for i in range(10):
+                    sys.stdout.write(".")
+                    sys.stdout.flush()
+                    time.sleep(0.2)
+                print()
+                if withdraw <=0 or withdraw > 500000:
+                    print("Invalid amount. Enter again.")
+                    continue
+                elif withdraw > bank_system.accounts[log_acc].balance:
+                    print(f"Insufficient balance for withdrawal. You only have ₱{bank_system.accounts[log_acc].balance}.")
+                    continue
+                bank_system.withdraw_money(log_acc, withdraw)
+                print("Transaction Complete.")
+                break
+            except ValueError:
+                print(f"Exiting",end="")
+                for i in range(10):
+                    sys.stdout.write(".")
+                    sys.stdout.flush()
+                    time.sleep(0.2)
+                print()
+                break
+        
+        
+    def balance(self,bank_system,log_acc):
+        print(f"Checking balance", end="")
+        for i in range(10):
+            sys.stdout.write(".")
+            sys.stdout.flush()
+            time.sleep(0.2)
+        print()
+        print(f"Account {log_acc}'s Balance: ₱{round(bank_system.accounts[log_acc].balance, 6)} ")
+        
+    def transfer_local(self,bank_system,log_acc):
+        log_acc2 = str(input("Enter the recipient's account: "))
+        print(f"Verifying the account", end="")
+        for i in range(10):
+            sys.stdout.write(".")
+            sys.stdout.flush()
+            time.sleep(0.2)
+        print()
+        if log_acc2.isalpha() or not log_acc2:
+            print("Invalid Account.")
+            return
+        
+        elif log_acc2 == log_acc:
+            print("Invalid Action.")
+            return
+        
+        elif log_acc2 in bank_system.accounts:
+            while(True):
+                try:
+                    transfer = input(f"Enter amount to transfer to {log_acc2}: ")
+                    if transfer.isalpha() or not transfer:
+                        print(f"Exiting",end="")
+                        for i in range(10):
+                            sys.stdout.write(".")
+                            sys.stdout.flush()
+                            time.sleep(0.2)
+                        print()
+                        return
+                    transfer = float(transfer)
+                    print(f"Checking balance", end="")
+                    for i in range(10):
+                        sys.stdout.write(".")
+                        sys.stdout.flush()
+                        time.sleep(0.2)
+                    print()
+                    
+                    if transfer > bank_system.accounts[log_acc].balance:
+                        print(f"Insufficient balance for transfer. You only have ₱{bank_system.accounts[log_acc].balance}.")
+                        continue 
+                    
+                    elif transfer < 1:
+                        print("Invalid Amount.")
+                        continue
+                    bank_system.transfer_money(log_acc, log_acc2, transfer)
+                    print("Transaction Complete!")
+                    break
+                except ValueError:
+                    print(f"Exiting",end="")
+                    for i in range(10):
+                        sys.stdout.write(".")
+                        sys.stdout.flush()
+                        time.sleep(0.2)
+                    print()
+                    break
+        else:
+            print(f"No {log_acc2} found.")
+            
+    def transfer_visa(self,bank_system,log_acc):
+        if not bank_system.accounts[log_acc].visa:
+            print("VISA not registered yet. Please register first.")
+            return
+        ccv_transfer = input("Please enter your CCV: ")
+        if not ccv_transfer == bank_system.accounts[log_acc].visa["ccv"]:
+            print("Incorrect CCV!")
+            return
+        visaU = input("Enter the username of the recipient: ")
+        if not visaU:
+            print(f"Exiting",end="")
+            for i in range(10):
+                sys.stdout.write(".")
+                sys.stdout.flush()
+                time.sleep(0.2)
+            print()
+            return
+        while True:
+            try:
+                visaA = input("How much are you going to pay: ")
+                if visaA.isalpha() or not visaA:
+                    print(f"Exiting",end="")
+                    for i in range(10):
+                        sys.stdout.write(".")
+                        sys.stdout.flush()
+                        time.sleep(0.2)
+                    print()
+                    return
+                visaA = float(visaA)
+                print(f"Checking balance", end="")
+                
+                for i in range(10):
+                    sys.stdout.write(".")
+                    sys.stdout.flush()
+                    time.sleep(0.2)
+                    
+                print()
+                
+                if visaA > bank_system.accounts[log_acc].balance:
+                    print("Invalid amount. You only have:",bank_system.accounts[log_acc].balance)
+                    continue 
+                
+                elif visaA <=0:
+                    print("Invalid Amount.")
+                    continue
+                bank_system.transfer_visa(log_acc,visaU,visaA)
+                print("Transaction Successful!")
+                break
+            except ValueError:
+                print(f"Exiting",end="")
+                for i in range(10):
+                    sys.stdout.write(".")
+                    sys.stdout.flush()
+                    time.sleep(0.2)
+                print()
+                break
+        
+    def history(self,bank_system,log_acc):
+        print(f"Retrieving History", end="")
+        for i in range(10):
+            sys.stdout.write(".")
+            sys.stdout.flush()
+            time.sleep(0.2)
+        print()
+        print("History: ")
+        if not bank_system.accounts[log_acc].history:
+            print("No Transactions made yet.")
+            return
+        for history in bank_system.accounts[log_acc].history:
+            print(history)
+    
+    def pay_bills_m(self,bank_system,log_acc):
+        while True:
+            try:
+                elecAccNum_m =  input("Enter your electric account number: ")
+                if elecAccNum_m.isalpha() or not elecAccNum_m:
+                    print(f"Exiting",end="")
+                    for i in range(10):
+                        sys.stdout.write(".")
+                        sys.stdout.flush()
+                        time.sleep(0.2)
+                    print()
+                    return
+                
+                elif int(elecAccNum_m)<0:
+                    print("Invalid Response. Try again.")
+                    continue
+                    
+                elif len(str(elecAccNum_m)) == 7:
+                    break
+                else:
+                    print("Invalid Response. Try again")
+            except ValueError:
+                print(f"Exiting",end="")
+                for i in range(10):
+                    sys.stdout.write(".")
+                    sys.stdout.flush()
+                    time.sleep(0.2)
+                print()
+                return
+        while True:
+            try:
+                elecAmt_m = input("How much are you going to pay: ")
+                if elecAmt_m.isalpha() or not elecAmt_m:
+                    print(f"Exiting",end="")
+                    for i in range(10):
+                        sys.stdout.write(".")
+                        sys.stdout.flush()
+                        time.sleep(0.2)
+                    print()
+                    return
+                elecAmt_m = float(elecAmt_m)
+                print(f"Checking balance", end="")
+                for i in range(10):
+                    sys.stdout.write(".")
+                    sys.stdout.flush()
+                    time.sleep(0.2)
+                print()
+                if elecAmt_m > bank_system.accounts[log_acc].balance:
+                    print("Invalid amount. You only have:",bank_system.accounts[log_acc].balance)
+                    continue 
+                elif elecAmt_m <=0:
+                    print("Invalid Amount.")
+                    continue
+                break
+            except ValueError:
+                print(f"Exiting",end="")
+                for i in range(10):
+                    sys.stdout.write(".")
+                    sys.stdout.flush()
+                    time.sleep(0.2)
+                print()
+                return
+        elecAccNum_m = "Meralco User "+elecAccNum_m
+        bank_system.payBills(log_acc,elecAccNum_m,elecAmt_m)
+        print("Bills Successfully Paid")
+        
+    def pay_bills_b1(self,bank_system,log_acc):
+        while True:
+            try:
+                elecAccNum_b1 = input("Enter your electric account number: ")
+                if elecAccNum_b1.isalpha() or not elecAccNum_b1:
+                    print(f"Exiting",end="")
+                    for i in range(10):
+                        sys.stdout.write(".")
+                        sys.stdout.flush()
+                        time.sleep(0.2)
+                    print()
+                    return
+                
+                elif int(elecAccNum_b1)<0:
+                    print("Invalid Response. Try again.")
+                    continue
+                    
+                elif len(str(elecAccNum_b1)) == 6:
+                    break
+                
+                else:
+                    print("Invalid Response. Try again")
+            except ValueError:
+                print(f"Exiting",end="")
+                for i in range(10):
+                    sys.stdout.write(".")
+                    sys.stdout.flush()
+                    time.sleep(0.2)
+                print()
+                return
+        while True:
+            try:
+                elecAmt_b1 = input("How much are you going to pay: ")
+                if elecAmt_b1.isalpha() or not elecAmt_b1:
+                    print(f"Exiting",end="")
+                    for i in range(10):
+                        sys.stdout.write(".")
+                        sys.stdout.flush()
+                        time.sleep(0.2)
+                    print()
+                    return
+                elecAmt_b1 = float(elecAmt_b1)
+                print(f"Checking balance", end="")
+                for i in range(10):
+                    sys.stdout.write(".")
+                    sys.stdout.flush()
+                    time.sleep(0.2)
+                print()
+                if elecAmt_b1 > bank_system.accounts[log_acc].balance:
+                    print("Invalid amount. You only have:",bank_system.accounts[log_acc].balance)
+                    continue 
+                elif elecAmt_b1 <=0:
+                    print("Invalid Amount.")
+                    continue
+                break
+            except ValueError:
+                print(f"Exiting",end="")
+                for i in range(10):
+                    sys.stdout.write(".")
+                    sys.stdout.flush()
+                    time.sleep(0.2)
+                print()
+                return
+        elecAccNum_b1 = "Batelec 1 User "+elecAccNum_b1
+        bank_system.payBills(log_acc,elecAccNum_b1,elecAmt_b1)
+        print("Bills Successfully Paid")
+        
+    def pay_bills_b2(self,bank_system,log_acc):
+        while True:
+            try:
+                elecAccNum_b2 = input("Enter your electric account number: ")
+                if elecAccNum_b2.isalpha() or not elecAccNum_b2:
+                    print(f"Exiting",end="")
+                    for i in range(10):
+                        sys.stdout.write(".")
+                        sys.stdout.flush()
+                        time.sleep(0.2)
+                    print()
+                    return
+                
+                elif int(elecAccNum_b2)<0:
+                    print("Invalid Response. Try again.")
+                    continue
+                    
+                elif len(str(elecAccNum_b2)) == 6:
+                    break
+                
+                else:
+                    print("Invalid Response. Try again")
+            except ValueError:
+                print(f"Exiting",end="")
+                for i in range(10):
+                    sys.stdout.write(".")
+                    sys.stdout.flush()
+                    time.sleep(0.2)
+                print()
+                return
+        while True:
+            try:
+                elecAmt_b2 = input("How much are you going to pay: ")
+                if elecAmt_b2.isalpha() or not elecAmt_b2:
+                    print(f"Exiting",end="")
+                    for i in range(10):
+                        sys.stdout.write(".")
+                        sys.stdout.flush()
+                        time.sleep(0.2)
+                    print()
+                    return
+                elecAmt_b2 = float(elecAmt_b2)
+                print(f"Checking balance", end="")
+                for i in range(10):
+                    sys.stdout.write(".")
+                    sys.stdout.flush()
+                    time.sleep(0.2)
+                print()
+                if elecAmt_b2 > bank_system.accounts[log_acc].balance:
+                    print("Invalid amount. You only have:",bank_system.accounts[log_acc].balance)
+                    continue 
+                elif elecAmt_b2 <=0:
+                    print("Invalid Amount.")
+                    continue
+                break
+            except ValueError:
+                print(f"Exiting",end="")
+                for i in range(10):
+                    sys.stdout.write(".")
+                    sys.stdout.flush()
+                    time.sleep(0.2)
+                print()
+                return
+        elecAccNum_b2 = "Batelec 2 User "+elecAccNum_b2
+        bank_system.payBills(log_acc,elecAccNum_b2,elecAmt_b2)
+        print("Bills Successfully Paid")
+        
+    def getCCV(self,bank_system,log_acc):
+        if "ccv" in bank_system.accounts[log_acc].visa:
+            print("YOU ALREADY HAVE A VISA.")
+            return
+        print("You are about to order you J.R.E Visa Card \nNote that your first order is free!")
+        visa_pin = input("Please re-enter your pin: ")
+        print(f"Verifying the account", end="")
+        for i in range(10):
+            sys.stdout.write(".")
+            sys.stdout.flush()
+            time.sleep(0.2)
+        print()
+        if not visa_pin == bank_system.accounts[log_acc].pin:
+            print("Incorrect Pin!")
+            return
+        
+        while True:
+            username = input("Enter your desired username on the card eg. @Username: ")
+            if username.isalpha():
+                break 
+            print("Invalid Username!")
+            print(f"Exiting",end="")
+            for i in range(10):
+                sys.stdout.write(".")
+                sys.stdout.flush()
+                time.sleep(0.2)
+            print()
+            return
+        address = input("Enter your full address (House#, Municipality, City, postal code): ")
+        if not address:
+            print(f"Exiting",end="")
+            for i in range(10):
+                sys.stdout.write(".")
+                sys.stdout.flush()
+                time.sleep(0.2)
+            print()
+            return
+        print(f"Verifying the account", end="")
+        for i in range(10):
+            sys.stdout.write(".")
+            sys.stdout.flush()
+            time.sleep(0.2)
+        print()
+        print(f"Please wait while we process your information...",end="")
+        for i in range(10):
+            sys.stdout.write(".")
+            sys.stdout.flush()
+            time.sleep(0.2)
+        print()
+        print(f"The system is now generating your CCV...",end="")
+        for i in range(10):
+            sys.stdout.write(".")
+            sys.stdout.flush()
+            time.sleep(0.2)
+        print()
+        bank_system.accounts[log_acc].validateVisa(username,address)
+        print("Account details:")
+        print("     Username:",bank_system.accounts[log_acc].visa["username"])
+        print("     Address:",bank_system.accounts[log_acc].visa["address"])
+        print("     CCV:",bank_system.accounts[log_acc].visa["ccv"])
+        print("     Expiry Date: 06/29")
+        print("VISA account successfully created!")
+    
+    def admin(self,bank_system):
+        master_code = input("Enter Master Code:")
+        print(f"Verifying.", end="")
+        for i in range(10):
+            sys.stdout.write(".")
+            sys.stdout.flush()
+            time.sleep(0.2)
+        print()
+        if master_code == "agoi":
+            print("ACCESS GRANTED!")
+            admin_ans = input("0. Save Data \n1. Load Data \n2. Exit\nReponse:")
+            if admin_ans == "0":
+                data_instance = Data(bank_system)
+                directory = str(input("Enter the name of your file: "))
+                while (not directory):
+                    print("Invalid. Please enter again.")
+                    directory = input("Enter the name of your file: ")
+                otps = str(directory+"OTPS.pkl")
+                directory = directory+".pkl"
+                data_instance.save(directory)
+                data_instance.saveOTPS(otps)
+                print(f"Saving Data.", end="")
+                for i in range(10):
+                    sys.stdout.write(".")
+                    sys.stdout.flush()
+                    time.sleep(0.2)
+                print()
+                print("Data successfully saved!")
+            elif admin_ans == "1":
+                data_instance = Data(bank_system)
+                directory = input("Enter the name of your file: ")
+                while (not directory):
+                    print("Invalid. Please enter again.")
+                    directory = input("Enter the name of your file: ")
+                otps = str(directory+"OTPS.pkl")
+                directory = str(directory+".pkl")
+                loaded_accounts = data_instance.load(directory)
+                loaded_OTPS = data_instance.loadOTPS(otps)
+                print(f"Loading Data.", end="")
+                for i in range(10):
+                    sys.stdout.write(".")
+                    sys.stdout.flush()
+                    time.sleep(0.2)
+                print()
+                if loaded_accounts == "none":
+                    print("No data found.")
+                    return
+                bank_system.accounts = loaded_accounts
+                bank_system.OTPTaken = loaded_OTPS
+                print("Data successfully loaded!")
+            elif admin_ans == "2":
+                print(f"Exiting.", end="")
+                for i in range(10):
+                    sys.stdout.write(".")
+                    sys.stdout.flush()
+                    time.sleep(0.2)
+                print()
+            else:
+                print("Invalid response.")
+        else:
+            print("Incorrect Master Code.")
+            print("ACCESS DENIED!")
+     
+    def dashboard(self,bank_system, log_acc):
+        while True:
+            print("Please select a function:")
+            log_ans = int(input(f"0.Deposit \n1.Withdraw \n2.Check Balance \n3.Transfer Money \n4.View Transaction History \n5.Utility Bills \n6.Order VISA \n7.Log Out \nResponse: "))
+            if log_ans == 0:
+                self.deposit(bank_system,log_acc)
+                
+            elif log_ans == 1:
+                self.withdraw(bank_system,log_acc)
+                
+            elif log_ans == 2:
+                self.balance(bank_system,log_acc)
+            elif log_ans == 3:
+                if(bank_system.accounts[log_acc].balance<=0):
+                    print("Inssufficient Balance for transfer.")
+                    continue
+                bank = input("1. Local Bank \n2. Other VISA Enabled Banks \nResponse: ")
+                if bank=="1":
+                    self.transfer_local(bank_system,log_acc)
+                        
+                elif bank =="2":
+                    self.transfer_visa(bank_system,log_acc)
+                else:
+                    print("Invalid Response.")
+            elif log_ans == 4:
+                self.history(bank_system,log_acc)
+            
+            elif log_ans == 5:
+                if bank_system.accounts[log_acc].balance <= 0:
+                    print("Insufficient balance for Payment.")
+                    continue
+                print("----You are about to pay your utility bill----")
+                pay = input("Select electricity provider below: \n1. Meralco \n2. Batelec 1 \n3. Batelec 2\nResponse: ")
+                if pay == "1":
+                    self.pay_bills_m(bank_system,log_acc)
+                if pay == "2":
+                    self.pay_bills_b1(bank_system,log_acc)
+                if pay == "3":
+                    self.pay_bills_b2(bank_system,log_acc)
+                else:
+                    print("Invalid Response.")
+            elif log_ans == 6:
+                self.getCCV(bank_system,log_acc)
+            elif log_ans == 7:
+                print(f"Logging out", end="")
+                for i in range(10):
+                    sys.stdout.write(".")
+                    sys.stdout.flush()
+                    time.sleep(0.2)
+                print()
+                auto_save_data_instance = Data(bank_system)
+                auto_save_data_instance.save("data.pkl")
+                auto_save_data_instance.saveOTPS("dataOTPS.pkl")
+                return
+            auto_save_data_instance = Data(bank_system)
+            auto_save_data_instance.save("data.pkl")
+            auto_save_data_instance.saveOTPS("dataOTPS.pkl")
+            
+    
+            
+    def run(self,bank_system):
+        while True:
+            print ("✦✧✦✧"*10)
+            print(f"Welcome to Group 1's Banking System. \nPlease select a function")
+            try:
+                ans = str(input(f"0. Create an account \n1. Login \n2. Admin \n3. Exit \nReponse:"))
+                print("✦✧✦✧"*10)  
+                if ans =="0":
+                    try:
+                        while True:
+                            print("//Enter a letter or an empty space to exit the program//")
+                            acc = str(input("Please enter an 8 numbered account number: "))
+                            if acc.isalpha() or not acc:
+                                raise ValueError
+                                
+                            elif len(acc) != 8:
+                                print("Account number should be 8 numbers. Please try again.")
+                                continue 
+                            
+                            elif int(acc)<0:
+                                print("Invalid Response. Try again.")
+                                continue
+                            
+                            elif acc in bank_system.accounts:
+                                print("Account Already exist.")
+                                continue 
+                            break
+                        
+                        while True:
+                            pin = str(input("Please enter a 6 numbered pin: "))
+                            if pin.isalpha():
+                                print("Invalid Response.")
+                                continue
+                            
+                            if int(pin)<0:
+                                print("Invalid Response. Try again.")
+                                continue
+                            
+                            elif len(str(pin)) == 6:
+                                while True:
+                                    con = str(input("Re-enter your pin: "))
+                                    if con.isalpha():
+                                        print("Invalid Response.")
+                                        continue
+                                    elif con == pin:
+                                        break
+                                    else:
+                                        print("PIN doesn't match.")
+                                        continue
+                                break
+                            print("Invalid PIN. Please enter a 6-digit PIN.")
+                            continue
+                        
+                        while True:
+                            balance = float(input("Enter the initial balance (500-500000): "))
+                            if balance <500 or balance >500000:
+                                print("Invalid Amount. Try again.")
+                                continue
+                            break
+                    except ValueError:
+                        print(f"Exiting",end="")
+                        for i in range(10):
+                            sys.stdout.write(".")
+                            sys.stdout.flush()
+                            time.sleep(0.2)
+                        print()
+                        continue
+                    
+                    print(f"Creating account", end ="")
+                    for i in range(10):
+                        sys.stdout.write(".")
+                        sys.stdout.flush()
+                        time.sleep(0.2)
+                    print()
+                    bank_system.add_account(acc,pin,balance)
+                    print("Account successfully created!")
+                    print("OTP: ",bank_system.accounts[acc].otp)
+                    print("*** DO NOT SHARE YOUR OTP WITH ANYONE! ***")
+                    auto_save_data_instance = Data(bank_system)
+                    auto_save_data_instance.save("data.pkl")
+                    auto_save_data_instance.saveOTPS("dataOTPS.pkl")
+                        
+                elif ans =="1":
+                    
+                    log_acc = str(input("Please enter your account number: "))
+                    if log_acc.isalpha():
+                        print("Invalid Response.")
+                        continue
+                    print(f"Looking for {log_acc}", end ="")
+                    for i in range(10):
+                        sys.stdout.write(".")
+                        sys.stdout.flush()
+                        time.sleep(0.2)
+                    print()
+                    if log_acc in bank_system.accounts:
+                        log_pin = str(input("Enter your PIN: "))
+                        print(f"Checking", end = "")
+                        for i in range(10):
+                            sys.stdout.write(".")
+                            sys.stdout.flush()
+                            time.sleep(0.2)
+                        print()
+                        if log_pin.isalpha():
+                            print("Invalid Response.")
+                            continue
+                        if (bank_system.accounts[log_acc].pin == log_pin):
+                            print("SUCCESSFULLY LOGGED IN!")
+                            self.dashboard(bank_system,log_acc)
+                        else:
+                            print("Incorrect PIN.")
+                            use_otp = input("Do you want to use your OTP? \n0. Use OTP\n1. Skip\nResponse: ")
+                            if(use_otp=="0"):
+                                otp = input("Enter OTP: ")
+                                print(f"Verifying.", end="")
+                                for i in range(10):
+                                    sys.stdout.write(".")
+                                    sys.stdout.flush()
+                                    time.sleep(0.2)
+                                print()
+                                if(otp==bank_system.accounts[log_acc].otp):
+                                    print(f"Checking", end = "")
+                                    for i in range(10):
+                                        sys.stdout.write(".")
+                                        sys.stdout.flush()
+                                        time.sleep(0.2)
+                                    print()
+                                    print("SUCCESSFULLY LOGGED IN!")
+                                    self.dashboard(bank_system,log_acc)
+                                else:
+                                    print("Incorrect OTP.")
+                            elif(use_otp=="1"):
+                                continue
+                            else:
+                                print("Invalid response.")
+                    else:
+                        print(f"No {log_acc} found.")
+                elif ans == "2":
+                    self.admin(bank_system)
+                elif ans =="3":
+                    print("Thank you for using our System. Bye ^_^.")
+                    break
+                else:
+                    print("Invalid Response.")
+            except ValueError:
+                print("Invalid answer.")
+                continue
+bank_system = bank_system()
+mainSystem = mainSystem()
+mainSystem.run(bank_system)
