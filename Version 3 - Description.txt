@@ -1,3 +1,7 @@
 Version 3 - Database
 
-In this version, we focused more on having secure data storage. We added a database that can store the user information securely and an admin function that allows the saving and loading of the data within the bank system to file for backup. Note that: this version is still under further development. There might be minor flaws but the system functions well with core functionalities with added security.
+In this version, we focused more on having secure data storage. 
+
+We added a database that can store the user information securely and an admin function that allows the saving and loading of the data within the bank system to file for backup. 
+
+Note that: this version is still under further development. There might be minor flaws but the system functions well with core functionalities with added security.
