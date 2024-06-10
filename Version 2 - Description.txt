@@ -1,0 +1,3 @@
+Version 2 - User Dashboard
+
+In this version, we have already implemented depositing, withdrawing, checking balances, viewing transaction history, and transferring money in our banking system (all still under further development). With these basic functionalities of a banking system, we now have created a user dashboard. Note that: the transferring of money only works within our banking system (J.R.E² to J.R.E² bank only as of now).  We're constantly improving security and other functionalities and features of the system.
